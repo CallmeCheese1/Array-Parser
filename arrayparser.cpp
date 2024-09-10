@@ -1,6 +1,8 @@
 #include "arrayparser.h"
 #include <fstream> //Includes the file stream library, which allows us to read from files at all.
 #include <sstream> //Includes the string stream libary, which allows us to read and write data to and from strings.
+#include <stdexcept> // For std::out_of_range
+#include <new> // For std::bad_alloc
 #include <iostream> //Might be useful if we need to cout anything for debugging!
 
 //This is the starter function, which reads the data from data.txt into array.
@@ -49,46 +51,61 @@ int doesIntegerExist(const int num, const int* array, const int size) {
 
 //Places the number given at the specified index, and couts the old value and the new value.
 void changeIntAtIndex(const int num, const int index, int* array, const int size) {
-	if (index >= 0 && index < size) {
-		int oldValue = array[index];
+	try {
+        // Check if the index is out of bounds
+        if (index < 0 || index >= size) {
+            throw std::out_of_range("Index out of range");
+        }
 
-		array[index] = num;
+        int oldValue = array[index];
+        array[index] = num;
 
-		std::cout << "changeIntAtIndex: Old Value at Index " << index << ": " << oldValue << std::endl;
-		std::cout << "changeIntAtIndex: New Value at Index " << index << ": " << array[index] << std::endl;
-
-	} else { //The index doesn't exist
-		std::cout << "changeIntAtIndex: The given index doesn't exist. Please try again." << std::endl;
-		return;
-	}
+        std::cout << "changeIntAtIndex: Old Value at Index " << index << ": " << oldValue << std::endl;
+        std::cout << "changeIntAtIndex: New Value at Index " << index << ": " << array[index] << std::endl;
+    } 
+    catch (const std::out_of_range& e) { //Handles an out of range exception, thrown in the try section of the code.
+        
+        std::cout << "changeIntAtIndex: " << e.what() << std::endl;
+    }
+    catch (const std::exception& e) { //Anything else goes wrong? Give them the generic message.
+        std::cout << "changeIntAtIndex: An error occurred: " << e.what() << std::endl;
+    }
 }
 
 //Adds a new number at the end of the array, and increases size so the world doesn't explode.
 //To be specific, we resize the array through pointer shenanigans. We create a new duplicate array that's one piece larger, add the new variable to that new array, and delete the old one while making the new version take its name. Pretty morbid.
 void addNewInt(const int new_num, int*& array, int& size) {
+    try {
+        // Increase array size by 1
+        int* newArray = new int[size + 1]; // Create new array with one extra element
 
-	// Increase array size by 1
-	int* newArray = new int[size + 1]; // Create new array with one extra element
+        // Copy the contents of the old array to the new array
+        for (int i = 0; i < size; ++i) {
+            newArray[i] = array[i];
+        }
 
-	// Copy the contents of the old array to the new array
-	for (int i = 0; i < size; ++i) {
-		newArray[i] = array[i];
-	}
+        // Add the new element to the end of the new array
+        newArray[size] = new_num;
 
-	// Add the new element to the end of the new array
-	newArray[size] = new_num;
+        // Delete the old array to free up memory
+        delete[] array;
 
-	// Delete the old array to free up memory
-	delete[] array;
+        // Make the original pointer point to the new array. Some real bodysnatcher stuff going on here.
+        array = newArray;
 
-	// Make the original pointer point to the new array. Some real bodysnatcher stuff going on here.
-	array = newArray;
+        std::cout << "Added " << new_num << " at index " << size << std::endl;
 
-	std::cout << "Added " << new_num << " at index " << size << std::endl;
-
-	// Update the size to reflect the new array size
-	size++;
-
+        // Update the size to reflect the new array size
+        size++;
+    } 
+    catch (const std::bad_alloc& e) { // In case we have a memory allocation failure, with all the pointer shenanigans
+        
+        std::cout << "addNewInt: Memory allocation failed: " << e.what() << std::endl;
+    }
+    catch (const std::exception& e) { //Again, any other exceptions.
+        
+        std::cout << "addNewInt: An error occurred: " << e.what() << std::endl;
+    }
 }
 
 //This one's weird. So, if the flag is true, it will delete the data at that index, but if it's false, we'll just replace that index with 0.
