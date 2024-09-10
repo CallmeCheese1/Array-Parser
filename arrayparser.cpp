@@ -81,7 +81,7 @@ void addNewInt(const int new_num, int*& array, int& size) {
 	// Delete the old array to free up memory
 	delete[] array;
 
-	// Make the original pointer point to the new array
+	// Make the original pointer point to the new array. Some real bodysnatcher stuff going on here.
 	array = newArray;
 
 	std::cout << "Added " << new_num << " at index " << size << std::endl;
